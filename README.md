@@ -6,14 +6,16 @@ A Python tool to download audio samples from the [FLEURS dataset](https://huggin
 
 FLEURS (Few-shot Learning Evaluation of Universal Representations of Speech) is a speech dataset covering 102 languages with parallel sentences. This tool allows you to easily download audio samples for specific languages.
 
+> **✅ Status**: This tool successfully downloads **real FLEURS audio data** directly from the Hugging Face dataset repository. It downloads the compressed archives, extracts the audio files, and provides them with complete metadata including transcriptions, speaker information, and audio characteristics.
+
 ## Supported Languages
 
 The tool supports downloading samples for the following languages:
 
-- **English** (`en_gb` or `en_us`)
+- **English** (`en_us`) - Note: Only US English available in FLEURS, not British English
 - **French** (`fr_fr`)
 - **Hebrew** (`he_il`)
-- **Hindi** (`hi_in`) - Indian language
+- **Hindi** (`hi_in`)
 - **Thai** (`th_th`)
 - **Mandarin Chinese** (`cmn_hans_cn`)
 - **German** (`de_de`)
@@ -70,8 +72,44 @@ uv run fleurs-download --lang fr_fr --samples 2 --split test ./output_dir
 
 - `--lang`: Language code to download (can be specified multiple times)
 - `--samples`: Number of samples to download per language (default: 3)
-- `--split`: Dataset split to use - `train`, `validation`, or `test` (default: `train`)
+- `--split`: Dataset split to use - `train`, `dev`, or `test` (default: `train`)
+- `--random-seed`: Random seed for reproducible sampling (optional)
+- `--reset`: Clear output directory before downloading (otherwise appends to existing data)
 - `output_dir`: Directory where audio files will be saved (required argument)
+
+## Random Sampling
+
+By default, the tool randomly selects samples from the available dataset:
+
+```bash
+# Random sampling (different samples each time)
+uv run fleurs-download --lang en_gb --samples 5 ./random_samples
+
+# Reproducible sampling with seed
+uv run fleurs-download --lang en_gb --samples 5 --random-seed 42 ./reproducible_samples
+```
+
+This ensures you get a diverse set of samples rather than always the first N samples from the dataset.
+
+## Reset vs Append Mode
+
+By default, the tool appends new samples to existing data:
+
+```bash
+# First run - downloads 3 samples
+uv run fleurs-download --lang en_us --samples 3 ./my_data
+
+# Second run - adds 2 more samples (total: 5)
+uv run fleurs-download --lang en_us --samples 2 ./my_data
+
+# Reset mode - clears directory and downloads fresh
+uv run fleurs-download --lang en_us --samples 5 --reset ./my_data
+```
+
+The tool automatically:
+- **Skips duplicates**: Won't re-download samples with the same ID
+- **Updates metadata**: Combines existing and new sample information
+- **Preserves data**: Existing samples remain unless `--reset` is used
 
 ## Output Structure
 
@@ -93,8 +131,19 @@ output_dir/
 ```
 
 Each language directory contains:
-- **Audio files**: WAV format, 16kHz sampling rate
-- **Metadata file**: JSON file with transcriptions, speaker information, and audio metadata
+- **Audio files**: Real WAV files from FLEURS dataset, 16kHz sampling rate
+- **Metadata file**: JSON file with actual transcriptions, speaker information, and audio metadata
+
+## Real FLEURS Data
+
+The tool downloads authentic FLEURS dataset content:
+
+- **Audio**: Real speech recordings from native speakers, converted to PCM 16-bit mono 16000 Hz
+- **Transcriptions**: Actual parallel sentences from the FLoRes benchmark
+- **Metadata**: Complete information including speaker gender, audio duration, and sampling details
+- **Quality**: Professional-grade speech data suitable for research and development
+- **Caching**: Downloaded archives are cached in `.cache/` to avoid re-downloading
+- **Format**: All audio files are standardised to PCM 16-bit mono 16000 Hz for consistency
 
 ## Metadata Format
 
@@ -103,15 +152,17 @@ The metadata JSON file contains detailed information about each audio sample:
 ```json
 [
   {
-    "id": 123,
-    "filename": "en_us_000123.wav",
-    "transcription": "normalised transcription text",
-    "raw_transcription": "Original transcription text",
+    "id": 151,
+    "filename": "en_us_000151.wav",
+    "transcription": "sir richard branson's virgin group had a bid for the bank rejected prior to the bank's nationalisation",
+    "raw_transcription": "Sir Richard Branson's Virgin Group had a bid for the bank rejected prior to the bank's nationalisation.",
     "language": "English",
-    "gender": 0,
-    "num_samples": 48000,
+    "gender": 1,
+    "num_samples": 120000,
     "sampling_rate": 16000,
-    "duration_seconds": 3.0
+    "duration_seconds": 7.5,
+    "original_filename": "11559549184357409250.wav",
+    "format": "PCM 16-bit mono"
   }
 ]
 ```
@@ -131,6 +182,20 @@ uv run fleurs-download --lang hi_in --lang th_th --samples 10 --split validation
 ### Example 3: Download all languages with fewer samples
 ```bash
 uv run fleurs-download --samples 1 ./quick_test
+```
+
+## Caching
+
+The tool automatically caches downloaded archives in the `.cache/fleurs/` directory to improve performance:
+
+- **First download**: Downloads and caches the archive (can be large, ~1-2GB per language)
+- **Subsequent downloads**: Uses cached archive, much faster
+- **Cache location**: `.cache/fleurs/` in the project directory
+- **Cache management**: Archives are reused across different sample counts and output directories
+
+To clear the cache:
+```bash
+rm -rf .cache/fleurs/
 ```
 
 ## Development
