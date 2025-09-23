@@ -18,30 +18,276 @@ from tqdm import tqdm
 import requests
 
 
-# Language code mappings for FLEURS dataset
-# Note: FLEURS only has en_us, not en_gb
-LANGUAGE_CODES = {
-    "en_us": "en_us",  # English (US) - only English variant available in FLEURS
-    "fr_fr": "fr_fr",  # French
-    "he_il": "he_il",  # Hebrew
-    "hi_in": "hi_in",  # Hindi
-    "th_th": "th_th",  # Thai
-    "cmn_hans_cn": "cmn_hans_cn",  # Mandarin Chinese (Simplified)
-    "de_de": "de_de",  # German
-    "it_it": "it_it",  # Italian
-}
-
-# Friendly language names
-LANGUAGE_NAMES = {
-    "en_us": "English",
-    "fr_fr": "French", 
-    "he_il": "Hebrew",
-    "hi_in": "Hindi",
-    "th_th": "Thai",
-    "cmn_hans_cn": "Mandarin Chinese",
-    "de_de": "German",
-    "it_it": "Italian",
-}
+def get_available_languages() -> dict:
+    """
+    Fetch available language codes from Hugging Face FLEURS dataset.
+    
+    Returns:
+        Dictionary mapping language codes to friendly names
+    """
+    try:
+        # Fetch the main data directory listing from Hugging Face
+        base_url = "https://huggingface.co/datasets/google/fleurs/tree/main/data"
+        response = requests.get(base_url, timeout=10)
+        response.raise_for_status()
+        
+        # Parse HTML to find language directories
+        import re
+        # Look for directory links in the format: href="/datasets/google/fleurs/tree/main/data/LANG_CODE"
+        pattern = r'href="/datasets/google/fleurs/tree/main/data/([a-z_]+)"'
+        matches = re.findall(pattern, response.text)
+        
+        # Filter out non-language directories (like README files, etc.)
+        language_codes = []
+        for match in matches:
+            # Language codes typically have underscores and are 2-5 characters + underscore + 2-5 characters
+            if '_' in match and len(match) >= 4 and len(match) <= 15:
+                language_codes.append(match)
+        
+        # Create friendly names mapping
+        language_names = {}
+        for code in sorted(set(language_codes)):
+            # Generate friendly names from language codes
+            parts = code.split('_')
+            if len(parts) >= 2:
+                lang_part = parts[0]
+                region_part = parts[1] if len(parts) > 1 else ''
+                
+                # Map common language codes to names
+                lang_map = {
+                    'en': 'English',
+                    'fr': 'French',
+                    'de': 'German',
+                    'es': 'Spanish',
+                    'it': 'Italian',
+                    'pt': 'Portuguese',
+                    'ru': 'Russian',
+                    'zh': 'Chinese',
+                    'ja': 'Japanese',
+                    'ko': 'Korean',
+                    'ar': 'Arabic',
+                    'hi': 'Hindi',
+                    'th': 'Thai',
+                    'he': 'Hebrew',
+                    'tr': 'Turkish',
+                    'pl': 'Polish',
+                    'nl': 'Dutch',
+                    'sv': 'Swedish',
+                    'da': 'Danish',
+                    'no': 'Norwegian',
+                    'fi': 'Finnish',
+                    'cs': 'Czech',
+                    'hu': 'Hungarian',
+                    'ro': 'Romanian',
+                    'bg': 'Bulgarian',
+                    'hr': 'Croatian',
+                    'sk': 'Slovak',
+                    'sl': 'Slovenian',
+                    'et': 'Estonian',
+                    'lv': 'Latvian',
+                    'lt': 'Lithuanian',
+                    'mt': 'Maltese',
+                    'ga': 'Irish',
+                    'cy': 'Welsh',
+                    'eu': 'Basque',
+                    'ca': 'Catalan',
+                    'gl': 'Galician',
+                    'cmn': 'Mandarin Chinese',
+                    'yue': 'Cantonese',
+                    'vi': 'Vietnamese',
+                    'id': 'Indonesian',
+                    'ms': 'Malay',
+                    'tl': 'Filipino',
+                    'bn': 'Bengali',
+                    'ur': 'Urdu',
+                    'ta': 'Tamil',
+                    'te': 'Telugu',
+                    'ml': 'Malayalam',
+                    'kn': 'Kannada',
+                    'gu': 'Gujarati',
+                    'pa': 'Punjabi',
+                    'mr': 'Marathi',
+                    'ne': 'Nepali',
+                    'si': 'Sinhala',
+                    'my': 'Burmese',
+                    'km': 'Khmer',
+                    'lo': 'Lao',
+                    'ka': 'Georgian',
+                    'hy': 'Armenian',
+                    'az': 'Azerbaijani',
+                    'kk': 'Kazakh',
+                    'ky': 'Kyrgyz',
+                    'uz': 'Uzbek',
+                    'tg': 'Tajik',
+                    'mn': 'Mongolian',
+                    'fa': 'Persian',
+                    'ps': 'Pashto',
+                    'sw': 'Swahili',
+                    'am': 'Amharic',
+                    'om': 'Oromo',
+                    'so': 'Somali',
+                    'ha': 'Hausa',
+                    'yo': 'Yoruba',
+                    'ig': 'Igbo',
+                    'zu': 'Zulu',
+                    'xh': 'Xhosa',
+                    'af': 'Afrikaans',
+                    'is': 'Icelandic',
+                    'fo': 'Faroese',
+                    'mk': 'Macedonian',
+                    'sq': 'Albanian',
+                    'sr': 'Serbian',
+                    'bs': 'Bosnian',
+                    'me': 'Montenegrin',
+                    'be': 'Belarusian',
+                    'uk': 'Ukrainian',
+                }
+                
+                friendly_name = lang_map.get(lang_part, lang_part.title())
+                if region_part:
+                    region_map = {
+                        'us': 'US',
+                        'gb': 'GB', 
+                        'ca': 'Canada',
+                        'au': 'Australia',
+                        'in': 'India',
+                        'cn': 'China',
+                        'tw': 'Taiwan',
+                        'hk': 'Hong Kong',
+                        'sg': 'Singapore',
+                        'my': 'Malaysia',
+                        'id': 'Indonesia',
+                        'th': 'Thailand',
+                        'vn': 'Vietnam',
+                        'ph': 'Philippines',
+                        'kr': 'Korea',
+                        'jp': 'Japan',
+                        'il': 'Israel',
+                        'ae': 'UAE',
+                        'sa': 'Saudi Arabia',
+                        'eg': 'Egypt',
+                        'ma': 'Morocco',
+                        'dz': 'Algeria',
+                        'tn': 'Tunisia',
+                        'ly': 'Libya',
+                        'sd': 'Sudan',
+                        'et': 'Ethiopia',
+                        'ke': 'Kenya',
+                        'tz': 'Tanzania',
+                        'ug': 'Uganda',
+                        'rw': 'Rwanda',
+                        'mw': 'Malawi',
+                        'zm': 'Zambia',
+                        'zw': 'Zimbabwe',
+                        'bw': 'Botswana',
+                        'na': 'Namibia',
+                        'za': 'South Africa',
+                        'br': 'Brazil',
+                        'mx': 'Mexico',
+                        'ar': 'Argentina',
+                        'cl': 'Chile',
+                        'co': 'Colombia',
+                        've': 'Venezuela',
+                        'pe': 'Peru',
+                        'ec': 'Ecuador',
+                        'bo': 'Bolivia',
+                        'py': 'Paraguay',
+                        'uy': 'Uruguay',
+                        'gf': 'French Guiana',
+                        'sr': 'Suriname',
+                        'gy': 'Guyana',
+                        'fr': 'France',
+                        'be': 'Belgium',
+                        'ch': 'Switzerland',
+                        'lu': 'Luxembourg',
+                        'mc': 'Monaco',
+                        'de': 'Germany',
+                        'at': 'Austria',
+                        'it': 'Italy',
+                        'es': 'Spain',
+                        'pt': 'Portugal',
+                        'ad': 'Andorra',
+                        'sm': 'San Marino',
+                        'va': 'Vatican',
+                        'mt': 'Malta',
+                        'cy': 'Cyprus',
+                        'gr': 'Greece',
+                        'mk': 'North Macedonia',
+                        'al': 'Albania',
+                        'me': 'Montenegro',
+                        'rs': 'Serbia',
+                        'ba': 'Bosnia and Herzegovina',
+                        'hr': 'Croatia',
+                        'si': 'Slovenia',
+                        'hu': 'Hungary',
+                        'ro': 'Romania',
+                        'bg': 'Bulgaria',
+                        'md': 'Moldova',
+                        'ua': 'Ukraine',
+                        'by': 'Belarus',
+                        'ru': 'Russia',
+                        'ge': 'Georgia',
+                        'am': 'Armenia',
+                        'az': 'Azerbaijan',
+                        'kz': 'Kazakhstan',
+                        'kg': 'Kyrgyzstan',
+                        'uz': 'Uzbekistan',
+                        'tm': 'Turkmenistan',
+                        'tj': 'Tajikistan',
+                        'af': 'Afghanistan',
+                        'pk': 'Pakistan',
+                        'ir': 'Iran',
+                        'iq': 'Iraq',
+                        'sy': 'Syria',
+                        'lb': 'Lebanon',
+                        'jo': 'Jordan',
+                        'ps': 'Palestine',
+                        'tr': 'Turkey',
+                        'fi': 'Finland',
+                        'se': 'Sweden',
+                        'no': 'Norway',
+                        'dk': 'Denmark',
+                        'is': 'Iceland',
+                        'fo': 'Faroe Islands',
+                        'gl': 'Greenland',
+                        'ee': 'Estonia',
+                        'lv': 'Latvia',
+                        'lt': 'Lithuania',
+                        'pl': 'Poland',
+                        'cz': 'Czech Republic',
+                        'sk': 'Slovakia',
+                        'hans': 'Simplified',
+                        'hant': 'Traditional',
+                    }
+                    region_friendly = region_map.get(region_part, region_part.upper())
+                    friendly_name = f"{friendly_name} ({region_friendly})"
+                
+                language_names[code] = friendly_name
+        
+        click.echo(f"✅ Found {len(language_names)} available languages from Hugging Face")
+        return language_names
+        
+    except Exception as e:
+        click.echo(f"⚠️  Could not fetch languages from Hugging Face: {e}", err=True)
+        click.echo("Using fallback language list...", err=True)
+        
+        # Fallback to a basic set of known languages
+        return {
+            "en_us": "English (US)",
+            "fr_fr": "French (France)", 
+            "de_de": "German (Germany)",
+            "es_es": "Spanish (Spain)",
+            "it_it": "Italian (Italy)",
+            "pt_pt": "Portuguese (Portugal)",
+            "ru_ru": "Russian (Russia)",
+            "zh_cn": "Chinese (China)",
+            "ja_jp": "Japanese (Japan)",
+            "ko_kr": "Korean (Korea)",
+            "ar_eg": "Arabic (Egypt)",
+            "hi_in": "Hindi (India)",
+            "th_th": "Thai (Thailand)",
+            "he_il": "Hebrew (Israel)",
+        }
 
 
 def get_cache_dir() -> Path:
@@ -57,14 +303,46 @@ def get_cache_key(language_code: str, split: str) -> str:
     return hashlib.md5(content.encode()).hexdigest()
 
 
-def convert_to_pcm_mono(audio_data: np.ndarray, sample_rate: int, target_rate: int = 16000) -> tuple:
+def normalize_audio_volume(audio_data: np.ndarray, target_db: float = -20.0) -> np.ndarray:
     """
-    Convert audio to PCM 16000 16-bit mono format.
+    Normalize audio volume to a target dB level.
+    
+    Args:
+        audio_data: Input audio array
+        target_db: Target RMS level in dB (default: -20 dB)
+    
+    Returns:
+        Volume-normalized audio array
+    """
+    # Calculate RMS (Root Mean Square) of the audio
+    rms = np.sqrt(np.mean(audio_data ** 2))
+    
+    # Avoid division by zero
+    if rms == 0:
+        return audio_data
+    
+    # Convert target dB to linear scale
+    target_rms = 10 ** (target_db / 20.0)
+    
+    # Calculate scaling factor
+    scaling_factor = target_rms / rms
+    
+    # Apply scaling and clip to prevent clipping
+    normalized_audio = audio_data * scaling_factor
+    normalized_audio = np.clip(normalized_audio, -1.0, 1.0)
+    
+    return normalized_audio
+
+
+def convert_to_pcm_mono(audio_data: np.ndarray, sample_rate: int, target_rate: int = 16000, normalize: bool = False) -> tuple:
+    """
+    Convert audio to PCM 16000 16-bit mono format with optional volume normalization.
     
     Args:
         audio_data: Input audio array
         sample_rate: Original sample rate
         target_rate: Target sample rate (default: 16000)
+        normalize: Whether to normalize volume (default: False)
     
     Returns:
         Tuple of (converted_audio, target_sample_rate)
@@ -79,6 +357,10 @@ def convert_to_pcm_mono(audio_data: np.ndarray, sample_rate: int, target_rate: i
         from scipy import signal
         num_samples = int(len(audio_data) * target_rate / sample_rate)
         audio_data = signal.resample(audio_data, num_samples)
+    
+    # Normalize volume if requested
+    if normalize:
+        audio_data = normalize_audio_volume(audio_data)
     
     # Ensure 16-bit range
     audio_data = np.clip(audio_data, -1.0, 1.0)
@@ -199,7 +481,9 @@ def download_language_samples(
     language_code: str, 
     num_samples: int, 
     output_dir: Path,
-    split: str = "train"
+    split: str = "train",
+    normalize: bool = False,
+    available_languages: dict = None
 ) -> Dict[str, Any]:
     """
     Download audio samples for a specific language from FLEURS dataset.
@@ -213,7 +497,8 @@ def download_language_samples(
     Returns:
         Dictionary with download statistics and metadata
     """
-    click.echo(f"Loading {LANGUAGE_NAMES.get(language_code, language_code)} dataset from FLEURS...")
+    lang_display = available_languages.get(language_code, language_code) if available_languages else language_code
+    click.echo(f"Loading {lang_display} dataset from FLEURS...")
     
     try:
         # Download metadata for the language and split
@@ -234,7 +519,11 @@ def download_language_samples(
             click.echo(f"Using all {len(metadata_list)} available samples")
         
         # Create language-specific output directory
-        lang_dir = output_dir / LANGUAGE_NAMES.get(language_code, language_code).lower().replace(" ", "_")
+        if available_languages:
+            lang_name = available_languages.get(language_code, language_code)
+        else:
+            lang_name = language_code
+        lang_dir = output_dir / lang_name.lower().replace(" ", "_").replace("(", "").replace(")", "")
         lang_dir.mkdir(parents=True, exist_ok=True)
         
         # Download and extract the entire archive for this split
@@ -251,7 +540,8 @@ def download_language_samples(
         samples_downloaded = 0
         processed_metadata = []
         
-        with tqdm(total=len(metadata_list), desc=f"Processing {LANGUAGE_NAMES.get(language_code, language_code)}") as pbar:
+        lang_display = available_languages.get(language_code, language_code) if available_languages else language_code
+        with tqdm(total=len(metadata_list), desc=f"Processing {lang_display}") as pbar:
             for item in metadata_list:
                 try:
                     # Check if we have this audio file
@@ -276,8 +566,8 @@ def download_language_samples(
                     try:
                         audio_data, original_sample_rate = sf.read(str(temp_audio_path))
                         
-                        # Convert to PCM mono format
-                        converted_audio, target_sample_rate = convert_to_pcm_mono(audio_data, original_sample_rate)
+                        # Convert to PCM mono format with optional normalization
+                        converted_audio, target_sample_rate = convert_to_pcm_mono(audio_data, original_sample_rate, normalize=normalize)
                         
                         # Save converted audio
                         sf.write(str(audio_path), converted_audio, target_sample_rate, subtype='PCM_16')
@@ -310,13 +600,14 @@ def download_language_samples(
                         "filename": audio_filename,
                         "transcription": item['transcription'],
                         "raw_transcription": item['raw_transcription'],
-                        "language": LANGUAGE_NAMES.get(language_code, language_code),
+                        "language": available_languages.get(language_code, language_code) if available_languages else language_code,
                         "gender": gender_int,
                         "num_samples": num_samples,
                         "sampling_rate": sample_rate,
                         "duration_seconds": duration_seconds,
                         "original_filename": item['file_name'],
-                        "format": "PCM 16-bit mono"
+                        "format": "PCM 16-bit mono",
+                        "normalized": normalize
                     }
                     processed_metadata.append(sample_metadata)
                     
@@ -356,7 +647,7 @@ def download_language_samples(
         
         return {
             "language_code": language_code,
-            "language_name": LANGUAGE_NAMES.get(language_code, language_code),
+            "language_name": available_languages.get(language_code, language_code) if available_languages else language_code,
             "samples_downloaded": samples_downloaded,
             "output_directory": str(lang_dir),
             "metadata_file": str(metadata_path)
@@ -371,34 +662,44 @@ def download_language_samples(
         }
 
 
-@click.command()
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
-    "--lang", 
+    "--lang", "-l",
     multiple=True,
-    help="Language codes to download (e.g., en_gb, fr_fr, he_il). Can be specified multiple times."
+    help="Language codes to download (e.g., en_us, fr_fr, he_il). Can be specified multiple times."
 )
 @click.option(
-    "--samples", 
+    "--samples", "-s",
     default=3, 
     help="Number of samples to download per language (default: 3)"
 )
 @click.option(
-    "--split", 
+    "--split", "-p",
     default="train", 
     help="Dataset split to use (train, dev, test). Default: train"
 )
 @click.option(
-    "--random-seed",
+    "--random-seed", "-r",
     type=int,
     help="Random seed for reproducible sampling. If not specified, uses random sampling."
 )
 @click.option(
-    "--reset",
+    "--reset", "-R",
     is_flag=True,
     help="Clear output directory before downloading. Otherwise, append new samples to existing data."
 )
-@click.argument("output_dir", type=click.Path())
-def cli(lang: tuple, samples: int, split: str, random_seed: int, reset: bool, output_dir: str):
+@click.option(
+    "--normalize", "-n",
+    is_flag=True,
+    help="Normalize audio volume to -20dB RMS for consistent loudness across samples."
+)
+@click.option(
+    "--list", "-L",
+    is_flag=True,
+    help="List all available language codes and exit."
+)
+@click.argument("output_dir", type=click.Path(), required=False)
+def cli(lang: tuple, samples: int, split: str, random_seed: int, reset: bool, normalize: bool, list: bool, output_dir: str):
     """
     Download audio samples from the FLEURS dataset.
     
@@ -408,10 +709,39 @@ def cli(lang: tuple, samples: int, split: str, random_seed: int, reset: bool, ou
         uv run fleurs-download --lang en_gb --lang fr_fr --samples 3 ./audio_samples
         uv run fleurs-download --lang hi_in --samples 5 --split validation ./data
     """
+    # Handle --list option
+    if list:
+        click.echo("🔍 Fetching available languages from Hugging Face...")
+        available_languages = get_available_languages()
+        
+        click.echo("📋 Available FLEURS language codes:")
+        click.echo("=" * 50)
+        for lang_code, lang_name in available_languages.items():
+            click.echo(f"  {lang_code:<15} - {lang_name}")
+        click.echo(f"\nTotal: {len(available_languages)} languages available")
+        click.echo("\nUsage examples:")
+        click.echo("  uv run fleurs-download -l en_us -s 3 ./output")
+        click.echo("  uv run fleurs-download -l fr_fr -l de_de -s 5 ./multi_lang")
+        return
+    
+    # Require output_dir if not listing
+    if not output_dir:
+        click.echo("Error: Missing argument 'OUTPUT_DIR'.", err=True)
+        click.echo("Use --help for usage information or --list to see available languages.")
+        return
+    
     # Set random seed if provided
     if random_seed is not None:
         random.seed(random_seed)
         click.echo(f"Using random seed: {random_seed}")
+    
+    # Show normalization status
+    if normalize:
+        click.echo("🔊 Volume normalization enabled (-20dB RMS)")
+    
+    # Fetch available languages from Hugging Face
+    click.echo("🔍 Fetching available languages from Hugging Face...")
+    available_languages = get_available_languages()
     
     # Convert output_dir to Path object
     output_path = Path(output_dir)
@@ -426,27 +756,31 @@ def cli(lang: tuple, samples: int, split: str, random_seed: int, reset: bool, ou
     
     # If no languages specified, use all supported languages
     if not lang:
-        languages_to_download = [
-            "en_us", "fr_fr", "he_il", "hi_in", 
-            "th_th", "cmn_hans_cn", "de_de", "it_it"
-        ]
-        click.echo("No languages specified. Downloading all supported languages:")
-        for lang_code in languages_to_download:
-            click.echo(f"  - {LANGUAGE_NAMES.get(lang_code, lang_code)} ({lang_code})")
+        languages_to_download = list(available_languages.keys())
+        click.echo(f"No languages specified. Downloading all {len(languages_to_download)} supported languages:")
+        for lang_code in languages_to_download[:5]:  # Show first 5
+            click.echo(f"  - {available_languages.get(lang_code, lang_code)} ({lang_code})")
+        if len(languages_to_download) > 5:
+            click.echo(f"  ... and {len(languages_to_download) - 5} more")
     else:
         # Validate and map language codes
         languages_to_download = []
         for lang_code in lang:
             if lang_code == "en_gb":
-                click.echo("⚠️  Note: FLEURS dataset only has 'en_us' (English US), not 'en_gb' (English GB)")
-                click.echo("    Using 'en_us' instead...")
-                languages_to_download.append("en_us")
-            elif lang_code in LANGUAGE_CODES:
-                mapped_code = LANGUAGE_CODES[lang_code]
-                languages_to_download.append(mapped_code)
+                if "en_gb" in available_languages:
+                    languages_to_download.append("en_gb")
+                elif "en_us" in available_languages:
+                    click.echo("⚠️  Note: Using 'en_us' as 'en_gb' not found in FLEURS dataset")
+                    languages_to_download.append("en_us")
+                else:
+                    click.echo("❌ Neither 'en_gb' nor 'en_us' found in FLEURS dataset", err=True)
+                    return
+            elif lang_code in available_languages:
+                languages_to_download.append(lang_code)
             else:
                 click.echo(f"❌ Unsupported language code: {lang_code}", err=True)
-                click.echo(f"Supported codes: {', '.join(LANGUAGE_CODES.keys())}")
+                click.echo(f"Available codes: {', '.join(list(available_languages.keys())[:10])}...")
+                click.echo("Use --list to see all available languages")
                 return
     
     if not languages_to_download:
@@ -460,12 +794,7 @@ def cli(lang: tuple, samples: int, split: str, random_seed: int, reset: bool, ou
     # Download samples for each language
     results = []
     for language_code in languages_to_download:
-        result = download_language_samples(
-            language_code=language_code,
-            num_samples=samples,
-            output_dir=output_path,
-            split=split
-        )
+        result = download_language_samples(language_code, samples, output_path, split, normalize, available_languages)
         results.append(result)
     
     # Print summary

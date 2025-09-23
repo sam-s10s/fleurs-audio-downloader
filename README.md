@@ -10,16 +10,9 @@ FLEURS (Few-shot Learning Evaluation of Universal Representations of Speech) is 
 
 ## Supported Languages
 
-The tool supports downloading samples for the following languages:
+The tool **dynamically discovers all available languages** from the FLEURS dataset on Hugging Face. Currently, this includes **49+ languages** such as:
 
-- **English** (`en_us`) - Note: Only US English available in FLEURS, not British English
-- **French** (`fr_fr`)
-- **Hebrew** (`he_il`)
-- **Hindi** (`hi_in`)
-- **Thai** (`th_th`)
-- **Mandarin Chinese** (`cmn_hans_cn`)
-- **German** (`de_de`)
-- **Italian** (`it_it`)
+Use `uv run fleurs-download --list` to see all currently available languages.
 
 ## Installation
 
@@ -37,7 +30,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Download 3 samples for English to a specified directory:
 
 ```bash
-uv run fleurs-download --lang en_gb --samples 3 ./output_dir
+uv run fleurs-download --lang en_us --samples 3 ./output_dir
 ```
 
 ### Multiple Languages
@@ -45,7 +38,7 @@ uv run fleurs-download --lang en_gb --samples 3 ./output_dir
 Download samples for multiple languages:
 
 ```bash
-uv run fleurs-download --lang en_gb --lang fr_fr --lang hi_in --samples 3 ./output_dir
+uv run fleurs-download --lang en_us --lang fr_fr --lang hi_in --samples 3 ./output_dir
 ```
 
 ### All Supported Languages
@@ -62,20 +55,89 @@ Choose from different dataset splits:
 
 ```bash
 # Use validation split
-uv run fleurs-download --lang en_gb --samples 5 --split validation ./output_dir
+uv run fleurs-download --lang en_us --samples 5 --split validation ./output_dir
 
-# Use test split  
+# Use test split
 uv run fleurs-download --lang fr_fr --samples 2 --split test ./output_dir
 ```
 
-## Command Line Options
+## Help and Language Listing
 
-- `--lang`: Language code to download (can be specified multiple times)
-- `--samples`: Number of samples to download per language (default: 3)
-- `--split`: Dataset split to use - `train`, `dev`, or `test` (default: `train`)
-- `--random-seed`: Random seed for reproducible sampling (optional)
-- `--reset`: Clear output directory before downloading (otherwise appends to existing data)
-- `output_dir`: Directory where audio files will be saved (required argument)
+```bash
+# Show help (both work)
+uv run fleurs-download -h
+uv run fleurs-download --help
+
+# List available languages
+uv run fleurs-download --list
+uv run fleurs-download -L
+```
+
+### Complete Help Output
+
+```
+Usage: fleurs-download [OPTIONS] [OUTPUT_DIR]
+
+  Download audio samples from the FLEURS dataset.
+
+  OUTPUT_DIR: Directory where audio files will be saved
+
+  Examples:     uv run fleurs-download --lang en_gb --lang fr_fr --samples 3
+  ./audio_samples     uv run fleurs-download --lang hi_in --samples 5 --split
+  validation ./data
+
+Options:
+  -l, --lang TEXT            Language codes to download (e.g., en_us, fr_fr,
+                             he_il). Can be specified multiple times.
+  -s, --samples INTEGER      Number of samples to download per language
+                             (default: 3)
+  -p, --split TEXT           Dataset split to use (train, dev, test). Default:
+                             train
+  -r, --random-seed INTEGER  Random seed for reproducible sampling. If not
+                             specified, uses random sampling.
+  -R, --reset                Clear output directory before downloading.
+                             Otherwise, append new samples to existing data.
+  -n, --normalize            Normalize audio volume to -20dB RMS for
+                             consistent loudness across samples.
+  -L, --list                 List all available language codes and exit.
+  -h, --help                 Show this message and exit.
+```
+
+### Available Languages Output
+
+```
+🔍 Fetching available languages from Hugging Face...
+✅ Found 49 available languages from Hugging Face
+📋 Available FLEURS language codes:
+==================================================
+  af_za           - Afrikaans (South Africa)
+  am_et           - Amharic (Ethiopia)
+  ar_eg           - Arabic (Egypt)
+  as_in           - As (India)
+  ast_es          - Ast (Spain)
+  az_az           - Azerbaijani (Azerbaijan)
+  be_by           - Belarusian (Belarus)
+  bg_bg           - Bulgarian (Bulgaria)
+  bn_in           - Bengali (India)
+  bs_ba           - Bosnian (Bosnia and Herzegovina)
+  ca_es           - Catalan (Spain)
+  ceb_ph          - Ceb (Philippines)
+  ckb_iq          - Ckb (Iraq)
+  cmn_hans_cn     - Mandarin Chinese (Simplified)
+  cs_cz           - Czech (Czech Republic)
+  cy_gb           - Welsh (GB)
+  da_dk           - Danish (Denmark)
+  de_de           - German (Germany)
+  el_gr           - El (Greece)
+  en_us           - English (US)
+  ... and 29 more languages
+
+Total: 49 languages available
+
+Usage examples:
+  uv run fleurs-download -l en_us -s 3 ./output
+  uv run fleurs-download -l fr_fr -l de_de -s 5 ./multi_lang
+```
 
 ## Random Sampling
 
@@ -83,13 +145,31 @@ By default, the tool randomly selects samples from the available dataset:
 
 ```bash
 # Random sampling (different samples each time)
-uv run fleurs-download --lang en_gb --samples 5 ./random_samples
+uv run fleurs-download --lang en_us --samples 5 ./random_samples
 
 # Reproducible sampling with seed
-uv run fleurs-download --lang en_gb --samples 5 --random-seed 42 ./reproducible_samples
+uv run fleurs-download --lang en_us --samples 5 --random-seed 42 ./reproducible_samples
 ```
 
 This ensures you get a diverse set of samples rather than always the first N samples from the dataset.
+
+## Volume Normalization
+
+The `--normalize` option ensures consistent audio levels across all samples:
+
+```bash
+# Download with volume normalization
+uv run fleurs-download -l en_us -s 5 -n ./normalized_audio
+
+# Using shorthand options
+uv run fleurs-download -l fr_fr -s 3 -n -r 42 ./data
+```
+
+**Benefits:**
+
+- **Consistent Volume**: All samples normalized to -20dB RMS level
+- **ML-Ready**: Uniform audio levels improve training consistency
+- **Quality Control**: Prevents overly quiet or loud samples
 
 ## Reset vs Append Mode
 
@@ -107,6 +187,7 @@ uv run fleurs-download --lang en_us --samples 5 --reset ./my_data
 ```
 
 The tool automatically:
+
 - **Skips duplicates**: Won't re-download samples with the same ID
 - **Updates metadata**: Combines existing and new sample information
 - **Preserves data**: Existing samples remain unless `--reset` is used
@@ -131,6 +212,7 @@ output_dir/
 ```
 
 Each language directory contains:
+
 - **Audio files**: Real WAV files from FLEURS dataset, 16kHz sampling rate
 - **Metadata file**: JSON file with actual transcriptions, speaker information, and audio metadata
 
@@ -170,16 +252,19 @@ The metadata JSON file contains detailed information about each audio sample:
 ## Examples
 
 ### Example 1: Download samples for specific languages
+
 ```bash
-uv run fleurs-download --lang en_gb --lang de_de --lang it_it --samples 5 ./my_audio_data
+uv run fleurs-download --lang en_us --lang de_de --lang it_it --samples 5 ./my_audio_data
 ```
 
 ### Example 2: Download validation samples
+
 ```bash
 uv run fleurs-download --lang hi_in --lang th_th --samples 10 --split validation ./validation_data
 ```
 
 ### Example 3: Download all languages with fewer samples
+
 ```bash
 uv run fleurs-download --samples 1 ./quick_test
 ```
@@ -194,6 +279,7 @@ The tool automatically caches downloaded archives in the `.cache/fleurs/` direct
 - **Cache management**: Archives are reused across different sample counts and output directories
 
 To clear the cache:
+
 ```bash
 rm -rf .cache/fleurs/
 ```
@@ -201,11 +287,13 @@ rm -rf .cache/fleurs/
 ## Development
 
 ### Running Tests
+
 ```bash
 uv run pytest
 ```
 
 ### Code Formatting
+
 ```bash
 uv run black .
 uv run isort .
@@ -215,26 +303,9 @@ uv run isort .
 
 - **Source**: [Google FLEURS Dataset](https://huggingface.co/datasets/google/fleurs)
 - **Audio Format**: WAV, 16kHz sampling rate
-- **Languages**: 102 languages total (8 supported by this tool)
+- **Languages**: 102 languages total
 - **Splits**: Train (~1000 samples), Validation (~400 samples), Test (~400 samples)
 
 ## License
 
 This tool is provided as-is. Please refer to the [FLEURS dataset license](https://huggingface.co/datasets/google/fleurs) for usage terms of the downloaded data.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **UV not found**: Make sure UV is installed and in your PATH
-2. **Network issues**: The tool downloads data from Hugging Face Hub - ensure you have internet access
-3. **Disk space**: Each audio sample is typically 1-5MB, plan accordingly
-4. **Language code errors**: Use the exact language codes listed in the supported languages section
-
-### Getting Help
-
-If you encounter issues:
-1. Check that you're using supported language codes
-2. Ensure you have sufficient disk space
-3. Verify your internet connection
-4. Check the error messages for specific guidance
