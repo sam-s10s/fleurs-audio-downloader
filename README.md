@@ -10,7 +10,7 @@ FLEURS (Few-shot Learning Evaluation of Universal Representations of Speech) is 
 
 ## Supported Languages
 
-The tool **dynamically discovers all available languages** from the FLEURS dataset on Hugging Face.
+The tool **dynamically discovers all available languages** from the FLEURS dataset on Hugging Face using the official API. This ensures access to the complete dataset of **102 languages**.
 
 Use `uv run fleurs-download --list` to see all currently available languages.
 
@@ -107,7 +107,7 @@ Options:
 
 ```
 🔍 Fetching available languages from Hugging Face...
-✅ Found 49 available languages from Hugging Face
+✅ Found 102 available languages from Hugging Face
 📋 Available FLEURS language codes:
 ==================================================
   af_za           - Afrikaans (South Africa)
@@ -130,9 +130,9 @@ Options:
   de_de           - German (Germany)
   el_gr           - El (Greece)
   en_us           - English (US)
-  ... and 29 more languages
+  ... and 82 more languages
 
-Total: 49 languages available
+Total: 102 languages available
 
 Usage examples:
   uv run fleurs-download -l en_us -s 3 ./output
@@ -318,7 +318,7 @@ uv run isort .
 
 - **Source**: [Google FLEURS Dataset](https://huggingface.co/datasets/google/fleurs)
 - **Audio Format**: WAV, 16kHz sampling rate
-- **Languages**: 102 languages total (49+ currently available)
+- **Languages**: 102 languages total (all available via API)
 - **Splits**: Train (~1000 samples), Validation (~400 samples), Test (~400 samples)
 - **Random Sampling**: Automatic seed display for reproducibility
 

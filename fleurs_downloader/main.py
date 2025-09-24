@@ -21,30 +21,29 @@ from tqdm import tqdm
 
 def get_available_languages() -> dict:
     """
-    Fetch available language codes from Hugging Face FLEURS dataset.
+    Fetch available language codes from Hugging Face FLEURS dataset using the API.
 
     Returns:
         Dictionary mapping language codes to friendly names
     """
     try:
-        # Fetch the main data directory listing from Hugging Face
-        base_url = "https://huggingface.co/datasets/google/fleurs/tree/main/data"
-        response = requests.get(base_url, timeout=10)
+        # Use the Hugging Face API to get complete directory listing
+        api_url = "https://huggingface.co/api/datasets/google/fleurs/tree/main/data"
+        response = requests.get(api_url, timeout=10)
         response.raise_for_status()
-
-        # Parse HTML to find language directories
-        import re
-
-        # Look for directory links in the format: href="/datasets/google/fleurs/tree/main/data/LANG_CODE"
-        pattern = r'href="/datasets/google/fleurs/tree/main/data/([a-z_]+)"'
-        matches = re.findall(pattern, response.text)
-
-        # Filter out non-language directories (like README files, etc.)
+        
+        # Parse JSON response
+        data = response.json()
+        
+        # Extract language codes from directory paths
         language_codes = []
-        for match in matches:
-            # Language codes typically have underscores and are 2-5 characters + underscore + 2-5 characters
-            if "_" in match and len(match) >= 4 and len(match) <= 15:
-                language_codes.append(match)
+        for item in data:
+            if item.get("type") == "directory" and item.get("path", "").startswith("data/"):
+                # Extract language code from path like "data/en_us"
+                lang_code = item["path"].replace("data/", "")
+                # Filter out non-language directories (metadata files, etc.)
+                if "_" in lang_code and len(lang_code) >= 4 and len(lang_code) <= 15:
+                    language_codes.append(lang_code)
 
         # Create friendly names mapping
         language_names = {}
@@ -827,15 +826,17 @@ def cli(
         # Validate language codes
         languages_to_download = []
         invalid_languages = []
-        
+
         for lang_code in lang:
             if lang_code in available_languages:
                 languages_to_download.append(lang_code)
             else:
                 invalid_languages.append(lang_code)
-        
+
         if invalid_languages:
-            click.echo(f"❌ Invalid language codes: {', '.join(invalid_languages)}", err=True)
+            click.echo(
+                f"❌ Invalid language codes: {', '.join(invalid_languages)}", err=True
+            )
             available_codes = [k for k in available_languages.keys()][:10]
             click.echo(f"Available codes: {', '.join(available_codes)}...")
             click.echo("Use --list to see all available languages")
