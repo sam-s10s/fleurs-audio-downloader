@@ -4,13 +4,13 @@ A Python tool to download audio samples from the [FLEURS dataset](https://huggin
 
 ## Overview
 
-FLEURS (Few-shot Learning Evaluation of Universal Representations of Speech) is a speech dataset covering 102 languages with parallel sentences. This tool allows you to easily download audio samples for specific languages.
+FLEURS (Few-shot Learning Evaluation of Universal Representations of Speech) is a speech dataset covering languages with parallel sentences. This tool allows you to easily download audio samples for specific languages.
 
 > **✅ Status**: This tool successfully downloads **real FLEURS audio data** directly from the Hugging Face dataset repository. It downloads the compressed archives, extracts the audio files, and provides them with complete metadata including transcriptions, speaker information, and audio characteristics.
 
 ## Supported Languages
 
-The tool **dynamically discovers all available languages** from the FLEURS dataset on Hugging Face. Currently, this includes **49+ languages** such as:
+The tool **dynamically discovers all available languages** from the FLEURS dataset on Hugging Face.
 
 Use `uv run fleurs-download --list` to see all currently available languages.
 
