@@ -82,7 +82,7 @@ Usage: fleurs-download [OPTIONS] [OUTPUT_DIR]
 
   OUTPUT_DIR: Directory where audio files will be saved
 
-  Examples:     uv run fleurs-download --lang en_gb --lang fr_fr --samples 3
+  Examples:     uv run fleurs-download --lang en_us --lang fr_fr --samples 3
   ./audio_samples     uv run fleurs-download --lang hi_in --samples 5 --split
   validation ./data
 
@@ -141,15 +141,23 @@ Usage examples:
 
 ## Random Sampling
 
-By default, the tool randomly selects samples from the available dataset:
+By default, the tool randomly selects samples from the available dataset and **displays the seed used**:
 
 ```bash
 # Random sampling (different samples each time)
 uv run fleurs-download --lang en_us --samples 5 ./random_samples
+# 🎲 Generated random seed: 860593063 (use --random-seed 860593063 to reproduce)
 
-# Reproducible sampling with seed
+# Reproducible sampling with specified seed
 uv run fleurs-download --lang en_us --samples 5 --random-seed 42 ./reproducible_samples
+# 🎲 Using random seed: 42
 ```
+
+**Key Features:**
+
+- **Automatic Seed Display**: Shows the seed used for random sampling
+- **Reproducibility**: Copy the displayed seed to reproduce exact results
+- **Diverse Sampling**: Ensures varied samples rather than always the first N
 
 This ensures you get a diverse set of samples rather than always the first N samples from the dataset.
 
@@ -188,9 +196,9 @@ uv run fleurs-download --lang en_us --samples 5 --reset ./my_data
 
 The tool automatically:
 
-- **Skips duplicates**: Won't re-download samples with the same ID
+- **Overwrites duplicates**: Re-downloads and overwrites samples with the same ID
 - **Updates metadata**: Combines existing and new sample information
-- **Preserves data**: Existing samples remain unless `--reset` is used
+- **Preserves unique data**: Existing samples with different IDs remain unless `--reset` is used
 
 ## Output Structure
 
@@ -198,17 +206,21 @@ The tool creates the following directory structure:
 
 ```
 output_dir/
-├── english/
+├── en_us/
 │   ├── en_us_000001.wav
 │   ├── en_us_000002.wav
 │   ├── en_us_000003.wav
 │   └── en_us_metadata.json
-├── french/
+├── fr_fr/
 │   ├── fr_fr_000001.wav
 │   ├── fr_fr_000002.wav
 │   ├── fr_fr_000003.wav
 │   └── fr_fr_metadata.json
-└── ...
+└── hi_in/
+    ├── hi_in_000001.wav
+    ├── hi_in_000002.wav
+    ├── hi_in_000003.wav
+    └── hi_in_metadata.json
 ```
 
 Each language directory contains:
@@ -269,6 +281,15 @@ uv run fleurs-download --lang hi_in --lang th_th --samples 10 --split validation
 uv run fleurs-download --samples 1 ./quick_test
 ```
 
+### Example 4: Error handling for invalid languages
+
+```bash
+uv run fleurs-download --lang invalid_code --samples 3 ./test
+# ❌ Invalid language codes: invalid_code
+# Available codes: af_za, am_et, ar_eg, as_in, ast_es, az_az, be_by, bg_bg, bn_in, bs_ba...
+# Use --list to see all available languages
+```
+
 ## Caching
 
 The tool automatically caches downloaded archives in the `.cache/fleurs/` directory to improve performance:
@@ -286,12 +307,6 @@ rm -rf .cache/fleurs/
 
 ## Development
 
-### Running Tests
-
-```bash
-uv run pytest
-```
-
 ### Code Formatting
 
 ```bash
@@ -303,8 +318,9 @@ uv run isort .
 
 - **Source**: [Google FLEURS Dataset](https://huggingface.co/datasets/google/fleurs)
 - **Audio Format**: WAV, 16kHz sampling rate
-- **Languages**: 102 languages total
+- **Languages**: 102 languages total (49+ currently available)
 - **Splits**: Train (~1000 samples), Validation (~400 samples), Test (~400 samples)
+- **Random Sampling**: Automatic seed display for reproducibility
 
 ## License
 
